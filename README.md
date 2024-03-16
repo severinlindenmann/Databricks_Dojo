@@ -2,8 +2,8 @@
 Welcome to DatabricksDojo - your repository for the code snippets featured in my blog posts about Databricks! 🚀
 
 # About
-DatabricksDojo hosts the code examples and snippets that accompany my blog articles on Databricks, Apache Spark, and related technologies. 
-Whether you're a reader of my blog or stumbled upon this repository, you'll find the code referenced in various posts [here](https://stefanko.ch/) and [here](https://medium.com/@stefanko-ch).
+<p>DatabricksDojo hosts the code examples and snippets that accompany my blog articles on Databricks, Apache Spark, and related technologies.
+Whether you're a reader of my blog or stumbled upon this repository, you'll find the code referenced in various posts <a href="https://stefanko.ch/" target="_blank">here</a> and <a href="https://medium.com/@stefanko-ch" target="_blank">here</a>.</p>
 
 # What's Inside
 Blog Code Snippets: Code snippets used in my blog posts, covering a range of Databricks use cases and scenarios.
