@@ -1,6 +1,7 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # Copy all tables & schemas into new catalog
+# MAGIC Blog post: https://medium.com/@stefanko-ch/how-to-copying-all-schemas-and-tables-from-one-catalog-to-another-catalog-in-databricks-68f4fcc18223
 
 # COMMAND ----------
 
