@@ -1,0 +1,77 @@
+{
+    "name": "DummyWaitPipeline",
+    "properties": {
+        "activities": [
+            {
+                "name": "Wait",
+                "type": "Wait",
+                "dependsOn": [],
+                "userProperties": [],
+                "typeProperties": {
+                    "waitTimeInSeconds": {
+                        "value": "@pipeline().parameters.seconds_to_wait",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "Trigger Databricks Job",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "Wait",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "POST",
+                    "url": {
+                        "value": "@concat(\n      'https://'\n    , pipeline().parameters.dbx_workspace_id\n    , '.azuredatabricks.net/api/2.1/jobs/run-now'\n    )",
+                        "type": "Expression"
+                    },
+                    "body": {
+                        "value": "@concat(\n        '{\"job_id\": '\n        , pipeline().parameters.dbx_job_id\n        , ', '\n        , '\"notebook_params\": {'\n        , '\"adf_run_id\": \"'\n        , pipeline().RunId\n        , '\"'\n        , '}}'\n)",
+                        "type": "Expression"
+                    },
+                    "authentication": {
+                        "type": "ServicePrincipal",
+                        "userTenant": "4a7b2a26-XXXX",
+                        "username": "b9abf0cd-XXXX",
+                        "resource": "2ff814a6-XXXX",
+                        "password": {
+                            "type": "SecureString",
+                            "value": "**********"
+                        }
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "seconds_to_wait": {
+                "type": "int",
+                "defaultValue": 3
+            },
+            "dbx_workspace_id": {
+                "type": "string",
+                "defaultValue": "adb-2786278596138244.4"
+            },
+            "dbx_job_id": {
+                "type": "string",
+                "defaultValue": "981128965123479"
+            }
+        },
+        "annotations": [],
+        "lastPublishTime": "2024-11-01T14:21:20Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}

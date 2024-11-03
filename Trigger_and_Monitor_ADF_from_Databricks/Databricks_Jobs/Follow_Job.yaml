@@ -1,0 +1,14 @@
+resources:
+  jobs:
+    Follow_Job:
+      name: Follow Job
+      tasks:
+        - task_key: Execute_Follow_Notebook
+          notebook_task:
+            notebook_path: /Workspace/Users/sk@nona.company/Follow Job
+            base_parameters:
+              adf_run_id: ""
+              dbx_run_id: "{{job.run_id}}"
+            source: WORKSPACE
+      queue:
+        enabled: true

@@ -1,0 +1,18 @@
+resources:
+  jobs:
+    Trigger_ADF_Pipeline:
+      name: Trigger ADF Pipeline
+      tasks:
+        - task_key: Start_ADF_Pipeline
+          notebook_task:
+            notebook_path: /Workspace/Users/sk@mpany/Trigger ADF Pipeline
+            base_parameters:
+              dbx_start_run_id: "{{job.run_id}}"
+              pipeline_name: DummyWaitPipeline
+              resource_group: rg-stefan
+              subscription_id: f43d1b9d-XXXX
+              factory_name: adf-stefan-nona
+              parameters: '{"seconds_to_wait": 3}'
+            source: WORKSPACE
+      queue:
+        enabled: true
