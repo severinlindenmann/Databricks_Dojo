@@ -6,30 +6,49 @@
 
 # DBTITLE 1,imports
 from pyspark.sql.functions import col, from_unixtime, to_timestamp
+import re
+
+# COMMAND ----------
+
+def transform_email(email):
+    match = re.match(r'^([^@]+)@', email)
+    if match:
+        username = match.group(1)
+        username = re.sub(r'[._]', '_', username)
+        return username
+    else:
+        return None
+
+# COMMAND ----------
+
+user_id = spark.sql('select current_user() as user').collect()[0]['user']
+user_catalog_name = transform_email(user_id)
 
 # COMMAND ----------
 
 # DBTITLE 1,define functions
 def transform_columns_current(df):
     """
-    transforms the input dataframe for current weather data
-    - converts columns
-    - adds data from nested columns as additional columns
+    Transforms the input dataframe for current weather data.
+    - Renames and selects specific columns.
+    - Extracts data from nested columns and adds them as additional columns.
+    
+    Args:
+    df (DataFrame): Input dataframe containing current weather data.
+    
+    Returns:
+    DataFrame: Transformed dataframe with selected and renamed columns.
     """
     df = (
         df
         .select(
             col("base").alias("Base"), 
-            # "clouds",
             col("clouds")["all"].alias("Clouds_All"),
             col("cod").alias("Cod"), 
-            # "coord",
             col("coord")["lon"].alias("Coord_Lon"),
             col("coord")["lat"].alias("Coord_Lat"),
-            # "dt", 
             to_timestamp(from_unixtime(col("dt"))).alias("Weather_TimeStamp"),
             col("id").alias("ID"), 
-            # "main", 
             col("main")["feels_like"].alias("Main_Feels_Like"),
             col("main")["temp_min"].alias("Main_Temp_Min"),
             col("main")["pressure"].alias("Main_Pressure"),
@@ -37,9 +56,6 @@ def transform_columns_current(df):
             col("main")["temp"].alias("Main_Temp"),
             col("main")["temp_max"].alias("Main_Temp_Max"),
             col("name").alias("City"), 
-            # "rain",
-            col("rain")["1h"].alias("Rain_1h"),
-            # "sys",
             col("sys")["country"].alias("Sys_Country"),
             col("sys")["id"].alias("Sys_ID"),
             to_timestamp(from_unixtime(col("sys")["sunrise"])).alias("Sys_Sunrise"),
@@ -47,13 +63,10 @@ def transform_columns_current(df):
             col("sys")["type"].alias("Sys_Type"),
             col("timezone").alias("Timezone"), 
             col("visibility").alias("Visibility"), 
-            # "weather",
-            # col("weather")[0],
             col("weather")[0]["icon"].alias("Weather_0_Icon"),
             col("weather")[0]["description"].alias("Weather_0_Description"),
             col("weather")[0]["main"].alias("Weather_0_Main"),
             col("weather")[0]["id"].alias("Weather_0_ID"),
-            # "wind",
             col("wind")["speed"].alias("Wind_Speed"),
             col("wind")["deg"].alias("Wind_Deg"),
             "LoadID", 
@@ -64,20 +77,23 @@ def transform_columns_current(df):
 
 def transform_columns_air_pollution(df):
     """
-    transforms the input dataframe for air_pollution
-    - converts columns
-    - adds data from nested columns as additional columns
+    Transforms the input dataframe for air pollution data.
+    - Renames and selects specific columns.
+    - Extracts data from nested columns and adds them as additional columns.
+    
+    Args:
+    df (DataFrame): Input dataframe containing air pollution data.
+    
+    Returns:
+    DataFrame: Transformed dataframe with selected and renamed columns.
     """
     df = (
         df
         .select(
             col("City"),
-            # col("coord").alias("Coord"),
             col("coord")["lon"].alias("Coord_Lon"),
             col("coord")["lat"].alias("Coord_Lat"),
-            # col("list")[0].alias("list"),
             col("list")[0]["dt"].alias("List_dt"),
-            # col("list")[0]["components"].alias("List_Components"),
             col("list")[0]["components"]["pm2_5"].alias("List_Components_pm2_5"),
             col("list")[0]["components"]["pm10"].alias("List_Components_pm10"),
             col("list")[0]["components"]["no2"].alias("List_Components_no2"),
@@ -94,9 +110,15 @@ def transform_columns_air_pollution(df):
 
 def transform_columns_cities(df):
     """
-    transforms the input dataframe for cities
-    - converts columns
-    - adds data from nested columns as additional columns
+    Transforms the input dataframe for cities data.
+    - Renames and selects specific columns.
+    - Extracts data from nested columns and adds them as additional columns.
+    
+    Args:
+    df (DataFrame): Input dataframe containing cities data.
+    
+    Returns:
+    DataFrame: Transformed dataframe with selected and renamed columns.
     """
     df = (
         df
@@ -117,7 +139,7 @@ def transform_columns_cities(df):
 # DBTITLE 1,Stream Current Weather data from Bronze to Silver
 bronze_stream_weather = (spark
                         .readStream
-                        .table("weather.bronze.current")
+                        .table(f"{user_catalog_name}.bronze.current")
                         )
 
 bronze_stream_weather = transform_columns_current(bronze_stream_weather)
@@ -126,9 +148,9 @@ silver_stream_weather = (bronze_stream_weather
                         .writeStream
                         .format("delta")
                         .outputMode("append")
-                        .option("checkpointLocation", f"/Volumes/weather/silver/checkpoints/currrent_weather/_checkpoint")
+                        .option("checkpointLocation", f"/Volumes/{user_catalog_name}/silver/checkpoints/currrent_weather/_checkpoint")
                         .trigger(once=True)
-                        .toTable("weather.silver.current")
+                        .toTable(f"{user_catalog_name}.silver.current")
                         )
 
 silver_stream_weather.awaitTermination()
@@ -138,7 +160,7 @@ silver_stream_weather.awaitTermination()
 # DBTITLE 1,Stream Air Pollution data from Bronze to Silver
 bronze_stream_air_pollution = (spark
                               .readStream
-                              .table("weather.bronze.air_pollution")
+                              .table(f"{user_catalog_name}.bronze.air_pollution")
                               )
 
 bronze_stream_air_pollution = transform_columns_air_pollution(bronze_stream_air_pollution)
@@ -147,9 +169,9 @@ silver_stream_air_pollution = (bronze_stream_air_pollution
                               .writeStream
                               .format("delta")
                               .outputMode("append")
-                              .option("checkpointLocation", f"/Volumes/weather/silver/checkpoints/air_pollution/_checkpoint")
+                              .option("checkpointLocation", f"/Volumes/{user_catalog_name}/silver/checkpoints/air_pollution/_checkpoint")
                               .trigger(once=True)
-                              .toTable("weather.silver.air_pollution")
+                              .toTable(f"{user_catalog_name}.silver.air_pollution")
                               )
 
 silver_stream_air_pollution.awaitTermination()
@@ -159,7 +181,7 @@ silver_stream_air_pollution.awaitTermination()
 # DBTITLE 1,Stream cities from Bronze to Silver
 bronze_stream_cities = (spark
                               .readStream
-                              .table("weather.bronze.cities")
+                              .table(f"{user_catalog_name}.bronze.cities")
                               )
 
 bronze_stream_cities = transform_columns_cities(bronze_stream_cities)
@@ -168,9 +190,9 @@ silver_stream_cities = (bronze_stream_cities
                               .writeStream
                               .format("delta")
                               .outputMode("append")
-                              .option("checkpointLocation", f"/Volumes/weather/silver/checkpoints/cities/_checkpoint")
+                              .option("checkpointLocation", f"/Volumes/{user_catalog_name}/silver/checkpoints/cities/_checkpoint")
                               .trigger(once=True)
-                              .toTable("weather.silver.cities")
+                              .toTable(f"{user_catalog_name}.silver.cities")
                               )
 
 silver_stream_cities.awaitTermination()
