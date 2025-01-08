@@ -1,0 +1,29 @@
+# The main job for dab_simple.
+variables:
+  cluster_id: 
+    description: This job runs on an existing cluster named  job on an existing cluster.
+    default: 
+    lookup:
+      cluster: "SingleNode_F4S"
+
+resources:
+  jobs:
+    simple_existing_cluster:
+      name: simple_existing_cluster
+
+      schedule:
+        # Run every day at 8:37 AM
+        quartz_cron_expression: '44 37 8 * * ?'
+        timezone_id: Europe/Zurich
+
+      email_notifications:
+        on_failure:
+          - stefan.koch@btelligent.com
+
+      tasks:
+        - task_key: notebook_task
+          notebook_task:
+            notebook_path: ../../../Notebooks/Tests/IntegrationTests/asset_bundles_simple.ipynb
+          
+          existing_cluster_id: ${var.cluster_id}
+          

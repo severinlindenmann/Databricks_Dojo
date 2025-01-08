@@ -1,0 +1,19 @@
+# The main job for dab_simple.
+resources:
+  jobs:
+    simple_serverless:
+      name: simple_serverless
+
+      schedule:
+        # Run every day at 8:37 AM
+        quartz_cron_expression: '44 37 8 * * ?'
+        timezone_id: Europe/Amsterdam
+
+      email_notifications:
+        on_failure:
+          - stefan.koch@btelligent.com
+
+      tasks:
+        - task_key: notebook_task
+          notebook_task:
+            notebook_path: ../../../Notebooks/Tests/IntegrationTests/asset_bundles_simple.ipynb

@@ -1,0 +1,30 @@
+# The main job for dab_simple.
+resources:
+  jobs:
+    simple_jobcluster:
+      name: simple_jobcluster
+
+      schedule:
+        # Run every day at 8:37 AM
+        quartz_cron_expression: '44 37 8 * * ?'
+        timezone_id: Europe/Amsterdam
+
+      email_notifications:
+        on_failure:
+          - stefan.koch@btelligent.com
+
+      tasks:
+        - task_key: notebook_task
+          notebook_task:
+            notebook_path: ../../../Notebooks/Tests/IntegrationTests/asset_bundles_simple.ipynb
+          
+          new_cluster:
+            spark_version: 13.3.x-scala2.12
+            node_type_id: Standard_D3_v2
+            data_security_mode: SINGLE_USER
+            num_workers: 0
+            spark_conf:
+                spark.master: "local[*, 4]"
+                spark.databricks.cluster.profile: singleNode
+            custom_tags:
+              ResourceClass: SingleNode

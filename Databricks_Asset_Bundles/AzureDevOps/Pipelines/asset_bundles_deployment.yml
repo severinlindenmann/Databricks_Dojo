@@ -1,0 +1,85 @@
+trigger: none
+
+# ##############################################################################
+# Deploy to DEV
+# ##############################################################################
+
+stages:
+  - stage: dev_asset_bundles_deployment
+    variables:
+      - template: ../Variables/dab_variables_dev.yml
+      
+    jobs:
+    - template: ../Templates/asset_bundles.yml
+      parameters:
+        environment: ${{variables.environment}}
+        service_connection: ${{variables.service_connection}}
+        action: deploy
+
+# ##############################################################################
+# Run Test Bundle in DEV
+# ##############################################################################
+
+  - stage: dev_run_asset_bundles
+    dependsOn:
+      - dev_asset_bundles_deployment
+    variables:
+      - template: ../Variables/dab_variables_dev.yml
+      
+    jobs:
+    - template: ../Templates/asset_bundles.yml
+      parameters:
+        environment: ${{variables.environment}}
+        service_connection: ${{variables.service_connection}}
+        action: run    
+
+# ##############################################################################
+# Deploy to INT
+# ##############################################################################
+
+  - stage: int_asset_bundles_deployment
+    dependsOn:
+      - dev_run_asset_bundles
+    variables:
+      - template: ../Variables/dab_variables_int.yml
+      
+    jobs:
+    - template: ../Templates/asset_bundles.yml
+      parameters:
+        environment: ${{variables.environment}}
+        service_connection: ${{variables.service_connection}}
+        action: deploy
+
+# ##############################################################################
+# Deploy to PRD
+# ##############################################################################
+
+  - stage: prd_asset_bundles_deployment
+    dependsOn:
+      - int_asset_bundles_deployment
+    variables:
+      - template: ../Variables/dab_variables_prd.yml
+      
+    jobs:
+    - template: ../Templates/asset_bundles.yml
+      parameters:
+        environment: ${{variables.environment}}
+        service_connection: ${{variables.service_connection}}
+        action: deploy
+
+# ##############################################################################
+# CleanUp Dev
+# ##############################################################################
+
+  - stage: dev_destroy_asset_bundles
+    dependsOn:
+      - dev_run_asset_bundles
+    variables:
+      - template: ../Variables/dab_variables_dev.yml
+      
+    jobs:
+    - template: ../Templates/asset_bundles.yml
+      parameters:
+        environment: ${{variables.environment}}
+        service_connection: ${{variables.service_connection}}
+        action: destroy

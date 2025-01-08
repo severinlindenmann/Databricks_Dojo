@@ -1,0 +1,37 @@
+# This is a Databricks asset bundle definition.
+# See https://docs.databricks.com/dev-tools/bundles/index.html for documentation.
+## (See Databricks docs on CI/CD at https://docs.databricks.com/dev-tools/bundles/ci-cd.html.)
+bundle:
+  name: dab01
+
+include:
+  - ./Jobs/*.yml
+  - ./Jobs/*/*.yml
+  - ./Jobs/*/*/*.yml
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: <REPLACE WITH YOUR HOST>
+
+  int:
+    presets:
+      trigger_pause_status: PAUSED # set pause_status to PAUSED for all triggers and schedules
+    mode: production
+    workspace:
+      host: <REPLACE WITH YOUR HOST>
+      root_path: /${bundle.name}
+    run_as:
+      service_principal_name: <REPLACE WITH YOUR SERVICE PRINCIPAL NAME>
+
+  prd:
+    presets:
+      trigger_pause_status: PAUSED # set pause_status to PAUSED for all triggers and schedules
+    mode: production
+    workspace:
+      host: <REPLACE WITH YOUR HOST>
+      root_path: /${bundle.name}
+    run_as:
+      service_principal_name: <REPLACE WITH YOUR SERVICE PRINCIPAL NAME>

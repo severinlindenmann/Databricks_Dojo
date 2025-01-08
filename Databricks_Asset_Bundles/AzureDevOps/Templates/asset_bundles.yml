@@ -1,0 +1,80 @@
+parameters:
+- name: environment
+  displayName: Environment
+  type: string
+  values:
+    - dev
+    - int
+    - prd
+- name: service_connection
+  displayName: 'Service Connection in Azure DevOps'
+  type: string
+- name: action
+  displayName: 'Action'
+  type: string
+  values:
+    - validate
+    - deploy
+    - run
+    - destroy
+
+jobs:
+- deployment: 'Asset_Bundles_${{ parameters.action}}_${{ parameters.environment }}'
+  environment: '${{ parameters.environment }}'
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+
+        - checkout: self
+          persistCredentials: true
+          clean: true
+          displayName: 'Checkout & Build.Reason: $(Build.Reason) & Build.SourceBranchName: $(Build.SourceBranchName)'
+
+        - script: |
+            curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sudo sh
+          displayName: 'Install Databricks CLI'
+
+        - script: |
+            databricks version
+          displayName: 'Get Databricks CLI version'
+
+        - task: AzureCLI@2
+          displayName: 'Get Databricks Access Token'
+          inputs:
+            azureSubscription: ${{ parameters.service_connection }}
+            scriptType: 'bash'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              echo "Getting access token..."
+              DATABRICKS_TOKEN=$(az account get-access-token --resource 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d --query "accessToken" -o tsv) 
+              echo "##vso[task.setvariable variable=DATABRICKS_TOKEN]$DATABRICKS_TOKEN"
+            # 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d is the ID of databricks type resurce in Azure
+
+        - script: |
+            cd Databricks
+            databricks bundle validate -t ${{ parameters.environment }}
+          displayName: 'Validate bundle'
+
+        # Deploy DAB
+        - ${{ if eq(parameters.action, 'deploy') }}:
+            - script: |
+                cd Databricks
+                databricks bundle deploy -t ${{ parameters.environment }}
+              displayName: 'Deploy Asset Bundles to ${{ parameters.environment }} environment'
+
+        # Run DAB
+        - ${{ if eq(parameters.action, 'run') }}:
+            - script: |
+                cd Databricks
+                databricks bundle run -t ${{ parameters.environment }} simple_serverless
+              displayName: 'Run workflow'
+
+        # Destroy DAB
+        - ${{ if eq(parameters.action, 'destroy') }}:
+            - script: |
+                  cd Databricks
+                  databricks bundle destroy --auto-approve -t ${{ parameters.environment }}
+
+              displayName: 'Clean up existing bundle files from ${{ parameters.environment }} environment'
+              continueOnError: true
