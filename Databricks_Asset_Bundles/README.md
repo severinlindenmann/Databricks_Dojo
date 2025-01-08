@@ -1,2 +1,2 @@
 # Databricks Asset Bundles DevOps Pipeline
-Original Blog-Post: 
+Original Blog-Post: [https://stefanko-ch.medium.com/effortless-databricks-asset-bundle-deployments-with-azure-devops-262f530176cb](https://stefanko-ch.medium.com/effortless-databricks-asset-bundle-deployments-with-azure-devops-262f530176cb)
