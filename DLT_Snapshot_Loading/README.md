@@ -1,2 +1,2 @@
 # From Snapshots to CDC: How to Load Data with Delta Live Tables
-Original Blog-Post: 
+Original Blog-Post: https://stefanko-ch.medium.com/from-snapshots-to-cdc-how-to-load-snapshot-data-with-databricks-delta-live-tables-2e32df4fd591
